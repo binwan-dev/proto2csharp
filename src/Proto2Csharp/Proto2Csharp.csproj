@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>proto2csharp</ToolCommandName>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <Version>0.0.1</Version>
+    <PackageVersion>0.0.1</PackageVersion>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>proto2csharp</PackageId>
+    <Authors>binwan</Authors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Kadder" Version="0.0.26" />
+  </ItemGroup>
+
+</Project>
