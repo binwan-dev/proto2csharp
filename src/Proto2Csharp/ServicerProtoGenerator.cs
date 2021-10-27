@@ -53,7 +53,7 @@ namespace Proto2Csharp
             proto.AppendLine("syntax = \"proto3\";");
             proto.AppendLine();
             foreach (var servicerProtoFile in servicerProtoFiles)
-                proto.AppendLine($"import {servicerProtoFile}");
+                proto.AppendLine($"import \"{servicerProtoFile}\";");
 
             return proto.ToString();
         }
