@@ -96,6 +96,7 @@ namespace Proto2Csharp
                 }
                 process.CancelErrorRead();
                 process.CancelOutputRead();
+                System.Threading.Thread.Sleep(100);
                 if (!process.HasExited)
                 {
                     process.Kill();

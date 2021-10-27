@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.Loader;
 using CommandLine;
-using Kadder.Grpc.Server;
 using Kadder.Utils;
 
 namespace Proto2Csharp
@@ -10,41 +13,43 @@ namespace Proto2Csharp
     {
         static void Main(string[] args)
         {
-            SettingOptions options=new SettingOptions();
+            SettingOptions options = new SettingOptions();
             Parser.Default.ParseArguments<SettingOptions>(args).WithParsed(o => options = o);
 
-            if(options.Type=="proto")
+            if (options.Type == "proto")
             {
+                generateProto(options);
             }
-
-
         }
 
         static void generateProto(SettingOptions options)
         {
-            if(!Directory.Exists(options.InputDir))
+            Console.WriteLine("Analysing project...");
+
+            if (!Directory.Exists(options.InputDir))
                 throw new DirectoryNotFoundException($"Notfound inputdir! InputDir: {options.InputDir}");
-            
-            var buildTempDir=$"{options.InputDir}/temp";
-            if(!Directory.Exists(buildTempDir))
-                Directory.CreateDirectory(buildTempDir);
-            var csprojFile=Directory.GetFiles(options.InputDir,"*.csproj");
-            if(csprojFile.Length==0)
+
+            var csprojFile = Directory.GetFiles(options.InputDir, "*.csproj");
+            if (csprojFile.Length == 0)
                 throw new FileNotFoundException($"The InputDir({options.InputDir}) notfound csproj file!");
-            var projectName=Path.GetFileNameWithoutExtension(csprojFile[0]);
-            
-            var shellHelper=new ShellHelper();
-            
-            
-            var result=shellHelper.Run("cd", options.InputDir);
-            if(result.ExitCode!=0)
-                throw new ApplicationException($"exec cd inputdir failed! InputDir: {options.InputDir}");
-            result=shellHelper.Run("dotnet", $"build -o temp");
-            if(result.ExitCode!=0)
+            var projectName = Path.GetFileNameWithoutExtension(csprojFile[0]);
+
+            var shellHelper = new ShellHelper();
+
+            var result = shellHelper.Run("dotnet", $"publish {options.InputDir} -o {options.InputDir}/temp/temp", shellOut);
+            if (result.ExitCode != 0)
                 return;
-                
-            // var servicerTypes=ServicerHelper.GetServicerTypes(List<Assembly> assemblies)
-            // var protoGenerator=new ServicerProtoGenerator(options.OutputDir,string.Empty,);
+
+            var context=new AssemblyLoadContext("proto");
+            foreach (var file in Directory.GetFiles($"{options.InputDir}/temp/temp/", "*.dll"))
+                context.LoadFromAssemblyPath(file);
+
+            var assembly = context.Assemblies.FirstOrDefault(p => p.FullName.Contains(projectName));
+            var servicerTypes=ServicerHelper.GetServicerTypes(new List<Assembly>{assembly});
+            var protoGenerator=new ServicerProtoGenerator(options.OutputDir,string.Empty,servicerTypes);
+            protoGenerator.Generate();
+
+            Directory.Delete($"{options.InputDir}/temp",true);
         }
 
         static void shellOut(string output)
