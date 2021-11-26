@@ -12,14 +12,14 @@ namespace Proto2Csharp
 {
     public class ServicerProtoGenerator
     {
-        private readonly string _saveDir;
+        private readonly string _saveFile;
         private readonly string _packageName;
         private readonly IList<Type> _servicerTypes;
         private readonly List<string> _messages;
 
-        public ServicerProtoGenerator(string saveDir, string packageName, List<Type> servicerTypes)
+        public ServicerProtoGenerator(string saveFile, string packageName, List<Type> servicerTypes)
         {
-            _saveDir = saveDir;
+            _saveFile = saveFile;
             _packageName = packageName;
             _servicerTypes = servicerTypes;
             _messages = new List<string>();
@@ -27,42 +27,38 @@ namespace Proto2Csharp
 
         public void Generate()
         {
+            var proto = new StringBuilder();
+            proto.AppendLine(generateHead());
+
             var servicerProtos = new Dictionary<string, string>();
             foreach (var servicerType in _servicerTypes)
             {
-                var servicerProto = generate(servicerType);
-                servicerProtos.Add($"{servicerType.Name}.proto", servicerProto);
+                proto.AppendLine(generate(servicerType));
             }
-            servicerProtos.Add("main.proto", generateMainProto(servicerProtos.Keys.ToList()));
 
-            saveProtoFile(servicerProtos);
+            saveProtoFile(proto);
         }
 
-        private void saveProtoFile(Dictionary<string, string> protos)
+        private void saveProtoFile(StringBuilder proto)
         {
-            if (!Directory.Exists(_saveDir))
-                Directory.CreateDirectory(_saveDir);
+            var saveDir = Path.GetDirectoryName(_saveFile);
+            if (!Directory.Exists(saveDir))
+                Directory.CreateDirectory(saveDir);
 
-            foreach (var proto in protos)
-                File.WriteAllText(Path.Combine(_saveDir, proto.Key), proto.Value);
+            File.WriteAllText(_saveFile,proto.ToString());
         }
 
-        private string generateMainProto(List<string> servicerProtoFiles)
+        private string generateHead()
         {
-            var proto = new StringBuilder();
-            proto.AppendLine("syntax = \"proto3\";");
-            proto.AppendLine();
-            foreach (var servicerProtoFile in servicerProtoFiles)
-                proto.AppendLine($"import \"{servicerProtoFile}\";");
-
-            return proto.ToString();
+            var head = new StringBuilder();
+            head.AppendLine("syntax = \"proto3\";");
+            head.AppendLine($"package {_packageName};");
+            return head.ToString();
         }
 
         private string generate(Type servicerType)
         {
             var proto = new StringBuilder();
-            proto.AppendLine(generateHead(servicerType));
-
             var serviceProto = new StringBuilder();
             var messageProto = new StringBuilder();
 
@@ -80,25 +76,13 @@ namespace Proto2Csharp
                 serviceProto.AppendLine();
                 messageProto.AppendLine(protoResult.MessageProto);
             }
-            
+
             serviceProto.AppendLine("}");
 
             proto.AppendLine(serviceProto.ToString());
             proto.AppendLine(messageProto.ToString());
 
             return proto.ToString();
-        }
-
-        private string generateHead(Type servicerType)
-        {
-            var head = new StringBuilder();
-            head.AppendLine("syntax = \"proto3\";");
-
-            var namespaceName = servicerType.Namespace;
-            if (!string.IsNullOrWhiteSpace(_packageName))
-                namespaceName = _packageName;
-            head.AppendLine($"package {namespaceName};");
-            return head.ToString();
         }
 
         private (string MethodProto, string MessageProto) generateMethodAndMessageForMethod(MethodInfo method)
@@ -146,23 +130,26 @@ namespace Proto2Csharp
             for (var i = 0; i < arr.Length; i++)
             {
                 var item = arr[i];
-                if (item.StartsWith("syntax ") || item.StartsWith("package ") || item.StartsWith("import "))
+                if (item.StartsWith("syntax ") || item.StartsWith("package ") || item.StartsWith("import ") || string.IsNullOrWhiteSpace(item))
                     continue;
 
                 if (item.StartsWith("message"))
                 {
                     currentType = item.Replace("message", "").Replace("{", "").Replace(" ", "");
-                    isContent = true;
                 }
                 if (item.StartsWith("enum"))
                 {
                     currentType = item.Replace("enum", "").Replace("{", "").Replace(" ", "");
                     isEnum = true;
-                    isContent = true;
                 }
                 if (!isContent && _messages.Contains(currentType))
                 {
                     continue;
+                }
+                if (item.EndsWith("{"))
+                {
+                    isContent = true;
+                    _messages.Add(currentType);
                 }
                 if (item.EndsWith("}"))
                 {
@@ -174,7 +161,6 @@ namespace Proto2Csharp
                     var key = item.Replace(" ", "").Split('=')[0];
                     item = item.Replace(key, $"{currentType}_{key}");
                 }
-                _messages.Add(currentType);
                 proto.AppendLine(item);
                 if (item.EndsWith("}") && i < arr.Length - 2)
                     proto.AppendLine();

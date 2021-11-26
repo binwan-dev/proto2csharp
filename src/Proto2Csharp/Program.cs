@@ -13,7 +13,7 @@ namespace Proto2Csharp
     {
         static void Main(string[] args)
         {
-            SettingOptions options = new SettingOptions();
+            var options = new SettingOptions();
             Parser.Default.ParseArguments<SettingOptions>(args).WithParsed(o => options = o);
 
             if (options.Type == "proto")
