@@ -14,7 +14,13 @@ namespace Proto2Csharp
         static void Main(string[] args)
         {
             var options = new SettingOptions();
-            Parser.Default.ParseArguments<SettingOptions>(args).WithParsed(o => options = o);
+            Parser.Default.ParseArguments<SettingOptions>(args)
+				.WithParsed(o=>
+				{
+					if(string.IsNullOrWhiteSpace(o.InputDir))
+                        o.InputDir = Directory.GetCurrentDirectory();
+                    shellOut($"Use Project -> {Directory.GetCurrentDirectory()}");
+                }).WithParsed(o => options = o);
 
             if (options.Type == "proto")
             {
@@ -29,27 +35,34 @@ namespace Proto2Csharp
             if (!Directory.Exists(options.InputDir))
                 throw new DirectoryNotFoundException($"Notfound inputdir! InputDir: {options.InputDir}");
 
-            var csprojFile = Directory.GetFiles(options.InputDir, "*.csproj");
-            if (csprojFile.Length == 0)
-                throw new FileNotFoundException($"The InputDir({options.InputDir}) notfound csproj file!");
-            var projectName = Path.GetFileNameWithoutExtension(csprojFile[0]);
+            var tempDir = $"{options.InputDir}/temp";
+            try
+            {
+                var csprojFile = Directory.GetFiles(options.InputDir, "*.csproj");
+                if (csprojFile.Length == 0)
+                    throw new FileNotFoundException($"The InputDir({options.InputDir}) notfound csproj file!");
+                var projectName = Path.GetFileNameWithoutExtension(csprojFile[0]);
 
-            var shellHelper = new ShellHelper();
+                var shellHelper = new ShellHelper();
 
-            var result = shellHelper.Run("dotnet", $"publish {options.InputDir} -o {options.InputDir}/temp/temp", shellOut);
-            if (result.ExitCode != 0)
-                return;
+                var result = shellHelper.Run("dotnet", $"publish {options.InputDir} -o {tempDir}/temp", shellOut);
+                if (result.ExitCode != 0)
+                    return;
 
-            var context=new AssemblyLoadContext("proto");
-            foreach (var file in Directory.GetFiles($"{options.InputDir}/temp/temp/", "*.dll"))
-                context.LoadFromAssemblyPath(file);
+                var context = new AssemblyLoadContext("proto");
+                foreach (var file in Directory.GetFiles($"{tempDir}/temp/", "*.dll"))
+                    context.LoadFromAssemblyPath(file);
 
-            var assembly = context.Assemblies.FirstOrDefault(p => p.FullName.Contains(projectName));
-            var servicerTypes=ServicerHelper.GetServicerTypes(new List<Assembly>{assembly});
-            var protoGenerator=new ServicerProtoGenerator(options.OutputDir,string.Empty,servicerTypes);
-            protoGenerator.Generate();
-
-            Directory.Delete($"{options.InputDir}/temp",true);
+                var assembly = context.Assemblies.FirstOrDefault(p => p.FullName.Contains(projectName));
+                var servicerTypes = ServicerHelper.GetServicerTypes(new List<Assembly> { assembly });
+                var protoGenerator = new ServicerProtoGenerator(options.OutputFile, options.PackageName, servicerTypes);
+                protoGenerator.Generate();
+            }
+            finally
+            {
+				if(Directory.Exists(tempDir))
+					Directory.Delete(tempDir, true);
+            }
         }
 
         static void shellOut(string output)
