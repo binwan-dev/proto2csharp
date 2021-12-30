@@ -4,9 +4,9 @@
     <OutputType>Exe</OutputType>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>proto2csharp</ToolCommandName>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <Version>0.0.4</Version>
-    <PackageVersion>0.0.4</PackageVersion>
+    <TargetFramework>net6.0</TargetFramework>
+    <Version>6.0.1-preview.21123002</Version>
+    <PackageVersion>6.0.1-preview.21123002</PackageVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>proto2csharp</PackageId>
     <Authors>binwan</Authors>

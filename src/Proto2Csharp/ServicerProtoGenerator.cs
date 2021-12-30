@@ -45,7 +45,7 @@ namespace Proto2Csharp
             if (!Directory.Exists(saveDir))
                 Directory.CreateDirectory(saveDir);
 
-            File.WriteAllText(_saveFile,proto.ToString());
+            File.WriteAllText(_saveFile, proto.ToString());
         }
 
         private string generateHead()
@@ -68,7 +68,7 @@ namespace Proto2Csharp
             var grpcMethods = servicerType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
             foreach (var method in grpcMethods)
             {
-                if (method.CustomAttributes.FirstOrDefault(p => p.AttributeType == typeof(NotGrpcMethodAttribute)) != null)
+                if (method.CustomAttributes.FirstOrDefault(p => p.AttributeType.FullName == typeof(NotGrpcMethodAttribute).FullName) != null)
                     continue;
 
                 var protoResult = generateMethodAndMessageForMethod(method);
