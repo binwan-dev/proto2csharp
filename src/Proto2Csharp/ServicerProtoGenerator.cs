@@ -35,6 +35,7 @@ namespace Proto2Csharp
             {
                 proto.AppendLine(generate(servicerType));
             }
+            proto.AppendLine(genBclMessageProto());
 
             saveProtoFile(proto);
         }
@@ -161,6 +162,10 @@ namespace Proto2Csharp
                     var key = item.Replace(" ", "").Split('=')[0];
                     item = item.Replace(key, $"{currentType}_{key}");
                 }
+                if (item.Contains(".bcl."))
+                {
+                    item = item.Replace(".bcl.", "");
+                }
                 proto.AppendLine(item);
                 if (item.EndsWith("}") && i < arr.Length - 2)
                     proto.AppendLine();
@@ -168,6 +173,56 @@ namespace Proto2Csharp
             return proto.ToString();
         }
 
+        private string genBclMessageProto()
+        {
+            var bclMessages = new StringBuilder();
+            bclMessages.AppendLine("message TimeSpan {");
+            bclMessages.AppendLine("    sint64 value = 1; // the size of the timespan (in units of the selected scale)");
+            bclMessages.AppendLine("    TimeSpanScale scale = 2; // the scale of the timespan [default = DAYS]");
+            bclMessages.AppendLine("    enum TimeSpanScale {");
+            bclMessages.AppendLine("        DAYS = 0;");
+            bclMessages.AppendLine("        HOURS = 1;");
+            bclMessages.AppendLine("        MINUTES = 2;");
+            bclMessages.AppendLine("        SECONDS = 3;");
+            bclMessages.AppendLine("        MILLISECONDS = 4;");
+            bclMessages.AppendLine("        TICKS = 5;");
+            bclMessages.AppendLine("        MINMAX = 15; // dubious");
+            bclMessages.AppendLine("    }");
+            bclMessages.AppendLine("}");
+            bclMessages.AppendLine();
+            bclMessages.AppendLine("message DateTime {");
+            bclMessages.AppendLine("    sint64 value = 1; // the offset (in units of the selected scale) from 1970/01/01");
+            bclMessages.AppendLine("    TimeSpanScale scale = 2; // the scale of the timespan [default = DAYS]");
+            bclMessages.AppendLine("    DateTimeKind kind = 3; // the kind of date/time being represented [default = UNSPECIFIED]");
+            bclMessages.AppendLine("    enum TimeSpanScale {");
+            bclMessages.AppendLine("        DAYS = 0;");
+            bclMessages.AppendLine("        HOURS = 1;");
+            bclMessages.AppendLine("        MINUTES = 2;");
+            bclMessages.AppendLine("        SECONDS = 3;");
+            bclMessages.AppendLine("        MILLISECONDS = 4;");
+            bclMessages.AppendLine("        TICKS = 5;");
+            bclMessages.AppendLine("        MINMAX = 15; // dubious");
+            bclMessages.AppendLine("    }");
+            bclMessages.AppendLine("    enum DateTimeKind {");
+            bclMessages.AppendLine("        UNSPECIFIED = 0;// The time represented is not specified as either local time or Coordinated Universal Time (UTC).");
+            bclMessages.AppendLine("        UTC = 1;// The time represented is UTC.");
+            bclMessages.AppendLine("        LOCAL = 2;// The time represented is local time.");
+            bclMessages.AppendLine("    }");
+            bclMessages.AppendLine("}");
+	    bclMessages.AppendLine();
+            bclMessages.AppendLine("message Guid { ");
+            bclMessages.AppendLine("    fixed64 lo = 1; // the first 8 bytes of the guid (note:crazy-endian)");
+            bclMessages.AppendLine("    fixed64 hi = 2; // the second 8 bytes of the guid (note:crazy-endian)");
+            bclMessages.AppendLine("}");
+	    bclMessages.AppendLine();
+            bclMessages.AppendLine("message Decimal {");
+            bclMessages.AppendLine("    uint64 lo = 1; // the first 64 bits of the underlying value");
+            bclMessages.AppendLine("    uint32 hi = 2; // the last 32 bis of the underlying value");
+            bclMessages.AppendLine("    uint32 signScale = 3; // the number of decimal digits (bits 1-16), and the sign (bit 0)");
+            bclMessages.AppendLine("}");
+	    
+            return bclMessages.ToString();
+        }
     }
 }
-
+  

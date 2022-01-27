@@ -5,8 +5,8 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>proto2csharp</ToolCommandName>
     <TargetFramework>net6.0</TargetFramework>
-    <Version>6.0.1-preview.21123002</Version>
-    <PackageVersion>6.0.1-preview.21123002</PackageVersion>
+    <Version>6.0.1-preview.22012701</Version>
+    <PackageVersion>6.0.1-preview.22012701</PackageVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>proto2csharp</PackageId>
     <Authors>binwan</Authors>
@@ -14,8 +14,7 @@
 
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.8.0" />
-    <PackageReference Include="Fnlinker.Generic.Hosting" Version="1.2.9" />
-    <PackageReference Include="Kadder" Version="0.1.0-dev.20.1.3" />
+    <PackageReference Include="Kadder" Version="1.0.6" />
   </ItemGroup>
 
 </Project>
