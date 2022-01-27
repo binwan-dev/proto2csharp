@@ -45,23 +45,29 @@ namespace Proto2Csharp
 
                 var shellHelper = new ShellHelper();
 
-                var result = shellHelper.Run("dotnet", $"publish {options.InputDir} -o {tempDir}/temp", shellOut);
+                var result = shellHelper.Run("dotnet", $"publish {options.InputDir} -o {tempDir}", shellOut);
                 if (result.ExitCode != 0)
                     return;
 
-                var context = new AssemblyLoadContext("proto");
-                foreach (var file in Directory.GetFiles($"{tempDir}/temp/", "*.dll"))
-                    context.LoadFromAssemblyPath(file);
-
-                var assembly = context.Assemblies.FirstOrDefault(p => p.FullName.Contains(projectName));
-                var servicerTypes = ServicerHelper.GetServicerTypes(new List<Assembly> { assembly });
-                var protoGenerator = new ServicerProtoGenerator(options.OutputFile, options.PackageName, servicerTypes);
-                protoGenerator.Generate();
+                var context = new ProtoAssemblyLoadContext();
+                using(var stream = new FileStream($"{tempDir}/{projectName}.dll",FileMode.Open,FileAccess.Read))
+                {
+                    context.LoadFromStream(stream);
+                
+                    var assembly = context.Assemblies.FirstOrDefault(p => p.FullName.Contains(projectName));
+                    var servicerTypes = ServicerHelper.GetServicerTypes(new List<Assembly> { assembly });
+                    var protoGenerator = new ServicerProtoGenerator(options.OutputFile, options.PackageName, servicerTypes);
+                    protoGenerator.Generate();
+                }
+                context.Unload();
+                
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
             }
             finally
             {
 				if(Directory.Exists(tempDir))
-					Directory.Delete(tempDir, true);
+                    Directory.Delete(tempDir,true);
             }
         }
 

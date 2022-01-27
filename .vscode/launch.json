@@ -17,11 +17,11 @@
             "args": [
                 "proto",
                 "-i",
-                "/home/binwan/Documents/fnlinker/fnlinker.pmservice/src/Fnlinker.PmService_V2.Protocol",
+                "C:/Users/Administrator/Documents/binwan-dev/proto2csharp/src/NoteServer/Protocol",
                 "-o",
-                "./temp.proto",
+                "./noteserver.proto",
                 "-p",
-                "Fnlinker.PmService_V2"
+                "NotServer"
             ],
             "cwd": "${workspaceFolder}/src/Proto2Csharp",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console

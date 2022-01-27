@@ -5,8 +5,8 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>proto2csharp</ToolCommandName>
     <TargetFramework>net6.0</TargetFramework>
-    <Version>6.0.1-preview.22012701</Version>
-    <PackageVersion>6.0.1-preview.22012701</PackageVersion>
+    <Version>6.0.1-preview.22012801</Version>
+    <PackageVersion>6.0.1-preview.22012801</PackageVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>proto2csharp</PackageId>
     <Authors>binwan</Authors>
