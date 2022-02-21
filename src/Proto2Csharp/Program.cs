@@ -49,26 +49,62 @@ namespace Proto2Csharp
                 if (result.ExitCode != 0)
                     return;
 
+                var projectReferences = GetReferencePackageNames(csprojFile[0]);
+                projectReferences.Add(projectName);
+
                 var context = new ProtoAssemblyLoadContext();
-                using(var stream = new FileStream($"{tempDir}/{projectName}.dll",FileMode.Open,FileAccess.Read))
-                {
-                    context.LoadFromStream(stream);
-                
-                    var assembly = context.Assemblies.FirstOrDefault(p => p.FullName.Contains(projectName));
-                    var servicerTypes = ServicerHelper.GetServicerTypes(new List<Assembly> { assembly });
-                    var protoGenerator = new ServicerProtoGenerator(options.OutputFile, options.PackageName, servicerTypes);
-                    protoGenerator.Generate();
-                }
+                context = LoadAssemblies(projectReferences, tempDir, context);
+
+                var assembly = context.Assemblies.FirstOrDefault(p => p.FullName.Contains(projectName));
+                var servicerTypes = ServicerHelper.GetServicerTypes(new List<Assembly> { assembly });
+                var protoGenerator = new ServicerProtoGenerator(options.OutputFile, options.PackageName, servicerTypes);
+                protoGenerator.Generate();
+
                 context.Unload();
-                
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
+                deleteTempDir();
             }
-            finally
+            catch (Exception ex)
             {
-				if(Directory.Exists(tempDir))
+                deleteTempDir();
+                throw new Exception("See inner exception!", ex);
+            }
+
+            void deleteTempDir()
+            {
+                if(Directory.Exists(tempDir))
                     Directory.Delete(tempDir,true);
             }
+        }
+
+        static List<String> GetReferencePackageNames(string csprojFile)
+        {
+            var references = new List<string>();
+
+            var contents = File.ReadAllLines(csprojFile);
+            foreach (var line in contents)
+            {
+		if(!line.Contains("<ProjectReference"))
+                    continue;
+
+                var path = line.Substring(line.IndexOf("Include=\"") + 9).Split("\"")[0].Replace("\\","/");
+                references.Add(Path.GetFileNameWithoutExtension(path));
+            }
+
+            return references;
+        }
+
+        static ProtoAssemblyLoadContext LoadAssemblies(List<string> references,string dllDir,ProtoAssemblyLoadContext context)
+        {
+            foreach (var reference in references)
+            {
+                using (var stream = new FileStream($"{dllDir}/{reference}.dll", FileMode.Open, FileAccess.Read))
+                {
+                    context.LoadFromStream(stream);
+                }
+            }
+            return context;
         }
 
         static void shellOut(string output)

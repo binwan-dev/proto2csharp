@@ -17,7 +17,7 @@
             "args": [
                 "proto",
                 "-i",
-                "C:/Users/Administrator/Documents/binwan-dev/proto2csharp/src/NoteServer/Protocol",
+                "/Users/binwan/Documents/binwan-dev/Kadder/Simple/Server/",
                 "-o",
                 "./noteserver.proto",
                 "-p",
